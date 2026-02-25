@@ -185,20 +185,21 @@
             letter-spacing: -2px;
         }
 
-        /* Cascading Flip Animation */
+        /* Cascading Flip Animation - Horizontal Wave */
         .flip-container {
             display: inline-flex;
             justify-content: center;
             gap: 2px;
-            perspective: 1000px;
+            perspective: 1200px;
             vertical-align: top;
         }
         .flip-char {
             display: inline-block;
-            perspective: 1000px;
+            perspective: 1200px;
             min-width: 1.2em; /* Ensure enough space for IPA symbols without container collapsing */
             text-align: center;
             position: relative;
+            text-transform: none !important;
         }
         .flipper {
             position: relative;
@@ -210,28 +211,42 @@
             transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
             transition-delay: var(--delay);
             transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
         }
         .flip-container.flip .flipper {
-            transform: rotateX(180deg);
+            transform: rotateY(180deg);
+            -webkit-transform: rotateY(180deg);
         }
         .front, .back {
             -webkit-backface-visibility: hidden;
             backface-visibility: hidden;
             display: block;
         }
+        .front {
+            position: relative;
+            z-index: 2;
+            /* translateZ prevents browser z-fighting making backface hidden correctly */
+            transform: rotateY(0deg) translateZ(1px);
+            -webkit-transform: rotateY(0deg) translateZ(1px);
+        }
         .back {
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            width: 100%;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             text-align: center;
-            transform: rotateX(180deg);
+            transform: rotateY(180deg) translateZ(1px);
+            -webkit-transform: rotateY(180deg) translateZ(1px);
             color: #ffffff; /* Bright white as requested */
             font-family: 'Inter', sans-serif;
             font-weight: 400;
             font-size: 64px; /* Scaled to visually match the heavy Syne font */
             letter-spacing: 0;
+            z-index: 1;
         }
 
         /* Cinematic Blur Reveal Animation */
@@ -311,6 +326,8 @@
             width: 100%; 
             align-items: stretch; 
         }
+
+        /* Flipping Risk Cards (Inline Flips) */
         .risk-card { 
             background-color: #111111; 
             border: 1px solid #222; 
@@ -320,16 +337,58 @@
             flex-direction: column; 
             justify-content: flex-start; 
             border-radius: 8px;
+            position: relative;
+            cursor: pointer;
+            height: 280px; /* Fixed height to accommodate flipping area */
         }
         .risk-card h3 { 
             font-size: 20px; 
             margin-bottom: 20px; 
             display: flex; 
             align-items: center; 
+            z-index: 10;
         }
         .risk-card h3 i { 
             margin-right: 12px; 
             font-size: 22px; 
+        }
+        .risk-flipper-wrapper {
+            position: relative;
+            flex-grow: 1;
+            perspective: 1000px;
+            width: 100%;
+        }
+        .risk-flipper-content {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
+        }
+        .risk-card.is-flipped .risk-flipper-content {
+            transform: rotateY(180deg);
+            -webkit-transform: rotateY(180deg);
+        }
+        .risk-front, .risk-back {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+        .risk-front {
+            transform: rotateY(0deg) translateZ(1px);
+            -webkit-transform: rotateY(0deg) translateZ(1px);
+        }
+        .risk-back {
+            transform: rotateY(180deg) translateZ(1px);
+            -webkit-transform: rotateY(180deg) translateZ(1px);
         }
         .risk-card p { 
             font-size: 15px; 
@@ -346,14 +405,29 @@
             display: block; 
             margin-bottom: 5px; 
         }
+        .flip-hint-icon {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 16px;
+            color: #444;
+            transition: color 0.3s, transform 0.3s;
+            z-index: 10;
+        }
+        .risk-card:hover .flip-hint-icon {
+            color: #fff;
+        }
+        .risk-card.is-flipped .flip-hint-icon {
+            transform: rotate(180deg);
+        }
 
         /* Literature Grid */
         .lit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; }
         .lit-card { background-color: #0a0a0a; border: 1px solid #1f1f1f; padding: 25px; border-radius: 8px; }
         .tilt-card { transition: transform 0.1s; transform-style: preserve-3d; }
         .lit-card h4 { font-size: 18px; color: #fff; margin-bottom: 10px; font-family: 'Inter', sans-serif; text-transform: none; font-weight: 600; letter-spacing: 0;}
-        .lit-card .approach { font-size: 15px; color: #a0a0a0; margin-bottom: 15px; }
-        .lit-card .gap { font-size: 15px; color: #ff2a5f; background: rgba(255, 42, 95, 0.05); padding: 10px; border-left: 3px solid #ff2a5f; }
+        .lit-card .approach { font-size: 14px; color: #a0a0a0; margin-bottom: 15px; }
+        .lit-card .gap { font-size: 14px; color: #ff2a5f; background: rgba(255, 42, 95, 0.05); padding: 10px; border-left: 3px solid #ff2a5f; }
 
         /* System Schematic Diagram */
         .system-schematic {
@@ -780,25 +854,25 @@
                     <span class="flip-char">
                         <span class="flipper" style="--delay: 0s;">
                             <span class="front">N</span>
-                            <span class="back">[n̪</span>
+                            <span class="back">/ˈn</span>
                         </span>
                     </span>
                     <span class="flip-char">
-                        <span class="flipper" style="--delay: 0.1s;">
+                        <span class="flipper" style="--delay: 0.15s;">
                             <span class="front">E</span>
-                            <span class="back">eː</span>
-                        </span>
-                    </span>
-                    <span class="flip-char">
-                        <span class="flipper" style="--delay: 0.2s;">
-                            <span class="front">T</span>
-                            <span class="back">t̪</span>
+                            <span class="back">ɛ</span>
                         </span>
                     </span>
                     <span class="flip-char">
                         <span class="flipper" style="--delay: 0.3s;">
+                            <span class="front">T</span>
+                            <span class="back">tr</span>
+                        </span>
+                    </span>
+                    <span class="flip-char">
+                        <span class="flipper" style="--delay: 0.45s;">
                             <span class="front">R</span>
-                            <span class="back">ɾ]</span>
+                            <span class="back">ə/</span>
                         </span>
                     </span>
                 </span>
@@ -841,27 +915,27 @@
             <div class="lit-grid">
                 <!-- Paper 1 -->
                 <div class="lit-card tilt-card">
-                    <h4>1. Kassner et al., "OpenEyes: Open-Source Eye Tracking" (2014)</h4>
-                    <p class="approach">High-resolution camera rigs using complex 3D eyeball models and pure homography.</p>
-                    <p class="gap"><strong>Gap:</strong> Prohibitively expensive ($1000+), requires powerful dedicated computing, unsuitable for lightweight wearables.</p>
+                    <h4>1. Zhang et al. (MPIIGaze, CVPR '15)</h4>
+                    <p class="approach"><strong>Approach:</strong> CNN predicts gaze from eye images, demonstrating viability in unconstrained settings.</p>
+                    <p class="gap"><strong>Gap:</strong> Error ~3–5° &rarr; too large for precise line-level detection.</p>
                 </div>
                 <!-- Paper 2 -->
                 <div class="lit-card tilt-card">
-                    <h4>2. Krafka et al., "iTracker: Deep Learning for Eye Tracking" (2016)</h4>
-                    <p class="approach">Appearance-based CNNs estimating gaze from standard RGB webcams.</p>
-                    <p class="gap"><strong>Gap:</strong> Highly compute-intensive. Degrades rapidly with head-mounted (close-up) geometries and lacks precise line-level spatial resolution.</p>
+                    <h4>2. Krafka et al. (iTracker, CVPR '16)</h4>
+                    <p class="approach"><strong>Approach:</strong> Mobile screen-based CNN gaze estimation, proving edge computing feasibility.</p>
+                    <p class="gap"><strong>Gap:</strong> Designed for screens, not wearable inward cameras; lacks spatial precision.</p>
                 </div>
                 <!-- Paper 3 -->
                 <div class="lit-card tilt-card">
-                    <h4>3. Biedert et al., "The Wordometer" (2010)</h4>
-                    <p class="approach">Estimates reading speed by tracking document scrolling and digital page transitions.</p>
-                    <p class="gap"><strong>Gap:</strong> Strictly limited to digital screens. Completely ignores physical media and actual visual fixations.</p>
+                    <h4>3. Nishino & Nayar (Corneal Imaging, '04/'06)</h4>
+                    <p class="approach"><strong>Approach:</strong> Models cornea as a mirror to derive scene mapping, laying a strong geometric foundation for PCCR.</p>
+                    <p class="gap"><strong>Gap:</strong> Requires high-resolution optics & is sensitive to noise; unsuited for low-cost hardware.</p>
                 </div>
                 <!-- Paper 4 -->
                 <div class="lit-card tilt-card">
-                    <h4>4. Bulling et al., "Wearable EOG-based Activity Recognition" (2009)</h4>
-                    <p class="approach">Uses Electrooculography (electrodes around the eyes) to detect reading movements.</p>
-                    <p class="gap"><strong>Gap:</strong> Highly intrusive setup. Can detect *that* a user is reading, but cannot map gaze to specific text coordinates.</p>
+                    <h4>4. Villanueva & Cabeza (One-Point Calib., '08)</h4>
+                    <p class="approach"><strong>Approach:</strong> Uses a geometric eye model requiring only one calibration point, significantly reducing user burden.</p>
+                    <p class="gap"><strong>Gap:</strong> Fixed screen-plane estimation only; fails at gaze-to-scene mapping for arbitrary physical objects like books.</p>
                 </div>
             </div>
         </div>
@@ -879,11 +953,11 @@
                     <div class="stage-boxes">
                         <div class="s-box">
                             <strong><i class="fa-solid fa-eye icon-main"></i> IR Camera Node</strong>
-                            ESP32-CAM (QVGA) + NIR LEDs capturing pupil/glint.
+                            ESP32-CAM + NIR LEDs capturing pupil/glint.
                         </div>
                         <div class="s-box">
                             <strong><i class="fa-solid fa-camera icon-main"></i> Scene Camera Node</strong>
-                            ESP32-CAM (VGA) capturing physical text page.
+                            ESP32-CAM capturing physical text page.
                         </div>
                     </div>
                 </div>
@@ -910,9 +984,9 @@
                         <div class="s-box accent expandable">
                             <i class="fa-solid fa-chevron-down expand-hint"></i>
                             <strong><i class="fa-solid fa-project-diagram icon-main"></i> Gaze Mapping</strong>
-                            Polynomial mapping with temporal line-snapping.
+                            Homography mapping with temporal line-snapping.
                             <div class="mini-pipeline">
-                                <div class="mini-step"><i class="fa-solid fa-calculator"></i> Vector-to-Scene Regression Matrix</div>
+                                <div class="mini-step"><i class="fa-solid fa-calculator"></i> Vector-to-Scene Matrix</div>
                                 <div class="mini-arrow"><i class="fa-solid fa-arrow-down"></i></div>
                                 <div class="mini-step"><i class="fa-solid fa-crosshairs"></i> Output Raw (X, Y) Coordinate</div>
                                 <div class="mini-arrow"><i class="fa-solid fa-arrow-down"></i></div>
@@ -939,14 +1013,14 @@
                         </div>
                         <div class="s-box expandable">
                             <i class="fa-solid fa-chevron-down expand-hint"></i>
-                            <strong><i class="fa-solid fa-headphones icon-main"></i> Audio Synthesis</strong>
-                            Triggers synchronized spatial soundscapes.
+                            <strong><i class="fa-solid fa-headphones icon-main"></i> Audio Playback</strong>
+                            Triggers synchronized soundscapes.
                             <div class="mini-pipeline">
-                                <div class="mini-step"><i class="fa-solid fa-font"></i> Text Content Extraction (OCR)</div>
+                                <div class="mini-step"><i class="fa-solid fa-font"></i> Book Section Detection</div>
                                 <div class="mini-arrow"><i class="fa-solid fa-arrow-down"></i></div>
-                                <div class="mini-step"><i class="fa-solid fa-tags"></i> Semantic Context Tagging</div>
+                                <div class="mini-step"><i class="fa-solid fa-tags"></i> Look Up Track</div>
                                 <div class="mini-arrow"><i class="fa-solid fa-arrow-down"></i></div>
-                                <div class="mini-step"><i class="fa-solid fa-volume-high"></i> Render Spatial Audio Output</div>
+                                <div class="mini-step"><i class="fa-solid fa-volume-high"></i> Transition And Render Audio</div>
                             </div>
                         </div>
                     </div>
@@ -965,14 +1039,13 @@
                 <!-- BOM -->
                 <div class="hardware-list tilt-card">
                     <h3>Hardware BOM</h3>
-                    <div class="hardware-item"><span>2x ESP32-CAM Modules</span> <span>₹1,200</span></div>
-                    <div class="hardware-item"><span>1x IR Camera Filter Swap</span> <span>₹200</span></div>
+                    <div class="hardware-item"><span>2x ESP32-CAM Modules</span> <span>₹3,000</span></div>
                     <div class="hardware-item"><span>NIR LEDs (850nm)</span> <span>₹100</span></div>
                     <div class="hardware-item"><span>3D Printed Mounts (PLA)</span> <span>₹300</span></div>
                     <div class="hardware-item"><span>LiPo Battery & Wire</span> <span>₹400</span></div>
                     <div class="hardware-item" style="border-top: 1px dashed #444; padding-top: 10px; margin-top: 10px;">
                         <span style="color: #ff2a5f; font-weight: bold;">Total Cost Estimate</span> 
-                        <span style="color: #ff2a5f; font-weight: bold;">~₹2,200</span>
+                        <span style="color: #ff2a5f; font-weight: bold;">~₹3,800</span>
                     </div>
                 </div>
                 
@@ -1043,20 +1116,58 @@
         <h2 class="slide-title">Risks & Mitigations</h2>
         <div class="content-area">
             <div class="three-column">
-                <div class="risk-card tilt-card" style="border-top: 4px solid #ff2a5f;">
+                <!-- Card 1 -->
+                <div class="risk-card tilt-card" onclick="this.classList.toggle('is-flipped')" style="border-top: 4px solid #ff2a5f;">
                     <h3 style="color: #ff2a5f;"><i class="fa-solid fa-crosshairs"></i> Calibration Drift</h3>
-                    <p><strong>Challenge</strong>Calibration drift and mechanical instability may reduce line detection accuracy over time.</p>
-                    <p><strong>Mitigation</strong>This can be mitigated through rigid mounting, multi-point calibration, and periodic recalibration during use.</p>
+                    <div class="risk-flipper-wrapper">
+                        <div class="risk-flipper-content">
+                            <div class="risk-front">
+                                <strong>Challenge:</strong>
+                                <p>Calibration drift and mechanical instability may reduce line detection accuracy over time.</p>
+                            </div>
+                            <div class="risk-back">
+                                <strong >Mitigation:</strong>
+                                <p>This can be mitigated through rigid mounting, multi-point calibration, and periodic recalibration during use.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-arrow-rotate-right flip-hint-icon"></i>
                 </div>
-                <div class="risk-card tilt-card" style="border-top: 4px solid #5e2aff;">
+                
+                <!-- Card 2 -->
+                <div class="risk-card tilt-card" onclick="this.classList.toggle('is-flipped')" style="border-top: 4px solid #5e2aff;">
                     <h3 style="color: #5e2aff;"><i class="fa-solid fa-lightbulb"></i> Signal Noise</h3>
-                    <p><strong>Challenge</strong>Noisy pupil or glint detection due to lighting conditions, reflections, or low-resolution hardware may affect angular precision.</p>
-                    <p><strong>Mitigation</strong>This can be mitigated using controlled IR illumination, multi-glint setups, and temporal smoothing of gaze signals.</p>
+                    <div class="risk-flipper-wrapper">
+                        <div class="risk-flipper-content">
+                            <div class="risk-front">
+                                <strong>Challenge:</strong>
+                                <p>Noisy pupil or glint detection due to lighting conditions, reflections, or low-resolution hardware may affect angular precision.</p>
+                            </div>
+                            <div class="risk-back">
+                                <strong>Mitigation:</strong>
+                                <p>This can be mitigated using controlled IR illumination, multi-glint setups, and temporal smoothing of gaze signals.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-arrow-rotate-right flip-hint-icon"></i>
                 </div>
-                <div class="risk-card tilt-card" style="border-top: 4px solid #00f2fe;">
+                
+                <!-- Card 3 -->
+                <div class="risk-card tilt-card" onclick="this.classList.toggle('is-flipped')" style="border-top: 4px solid #00f2fe;">
                     <h3 style="color: #00f2fe;"><i class="fa-solid fa-ruler-combined"></i> Precision Limits</h3>
-                    <p><strong>Challenge</strong>Insufficient precision for adjacent line separation may occur if angular error exceeds expectations.</p>
-                    <p><strong>Mitigation</strong>This can be mitigated by combining geometric PCCR estimation with page layout constraints and sequential reading priors to stabilize line-level predictions.</p>
+                    <div class="risk-flipper-wrapper">
+                        <div class="risk-flipper-content">
+                            <div class="risk-front">
+                                <strong>Challenge:</strong>
+                                <p>Insufficient precision for adjacent line separation may occur if angular error exceeds expectations.</p>
+                            </div>
+                            <div class="risk-back">
+                                <strong>Mitigation:</strong>
+                                <p>This can be mitigated by combining geometric PCCR estimation with page layout constraints and sequential reading priors to stabilize line-level predictions.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-arrow-rotate-right flip-hint-icon"></i>
                 </div>
             </div>
         </div>
