@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS6651 Project Pitch - Gaze-Augmented Reading System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Syne:wght@500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* =====================================================================
+           1. CORE SETUP & RESET
+           ===================================================================== */
+        :root {
+            /* Locked-in NETR Background Aesthetic Values */
+            --netr-stroke-opacity: 0.005;
+            --netr-glow-blur: 3px;
+            --netr-glow-opacity: 0.13;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Essential Slide Container: 1280x720 strictly maintained */
+        .slide-container {
+            align-items: center;
+            background-color: #050505;
+            border-radius: 0px; 
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            height: 720px;
+            justify-content: center;
+            overflow: hidden;
+            padding: 60px;
+            position: absolute;
+            width: 1280px;
+            border: 1px solid #1a1a1a;
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(0.8) translateZ(-100px);
+            transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.8s ease, visibility 0.8s;
+            will-change: transform, opacity;
+        }
+
+        .slide-container.active {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1) translateZ(0);
+            z-index: 10;
+        }
+
+        .slide-container.prev {
+            transform: scale(1.2) translateZ(100px);
+            opacity: 0;
+            visibility: hidden;
+            z-index: 5;
+        }
+
+        /* Fullscreen Mode Overrides */
+        :fullscreen .slide-container.active {
+            transform: scale(1.25) translateZ(0);
+        }
+        :-webkit-full-screen .slide-container.active {
+            transform: scale(1.25) translateZ(0);
+        }
+
+        /* Abstract subtle background glow */
+        .slide-container::before {
+            content: '';
+            position: absolute;
+            top: -20%;
+            left: -10%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(94, 42, 255, 0.05) 0%, rgba(5, 5, 5, 0) 70%);
+            z-index: 0;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: pulseGlow 4s infinite alternate ease-in-out;
+        }
+        
+        @keyframes pulseGlow {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(1.2); opacity: 1; }
+        }
+
+        .slide-container > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* NETR Background Animation Layer */
+        #netr-bg-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .netr-word {
+            position: absolute;
+            font-family: 'Syne', sans-serif, system-ui;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0) !important; /* Force transparent fill for all languages */
+            -webkit-text-stroke: 1px rgba(255, 255, 255, var(--netr-stroke-opacity)); 
+            text-shadow: 0 0 var(--netr-glow-blur) rgba(255, 255, 255, var(--netr-glow-opacity)); 
+            font-size: 54px; /* Uniform exact sizing */
+            user-select: none;
+            animation: driftNetr linear infinite;
+            will-change: transform, opacity;
+            opacity: 0;
+        }
+
+        @keyframes driftNetr {
+            0% { transform: translateY(15px); opacity: 0; }
+            25% { opacity: 1; }
+            75% { opacity: 1; }
+            100% { transform: translateY(-30px); opacity: 0; }
+        }
+
+        /* =====================================================================
+           2. TYPOGRAPHY & COLORS
+           ===================================================================== */
+        
+        .text-gradient {
+            background: linear-gradient(135deg, #ff2a5f, #5e2aff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: inline-block;
+        }
+
+        .heilmeier-tag {
+            font-family: 'Syne', sans-serif;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: #ff2a5f;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        h1, h2, h3, h4, .number {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            color: #ffffff;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: -1px;
+        }
+
+        p, li, th, td, cite, .subtitle, .chart-summary {
+            font-family: 'Inter', sans-serif;
+            font-weight: 300;
+            color: #a0a0a0;
+            line-height: 1.6;
+        }
+
+        .slide-container h1 {
+            font-size: 72px;
+            line-height: 0.95;
+            margin-bottom: 20px;
+            letter-spacing: -2px;
+        }
+
+        /* Cascading Flip Animation */
+        .flip-container {
+            display: inline-flex;
+            justify-content: center;
+            gap: 2px;
+            perspective: 1000px;
+            vertical-align: top;
+        }
+        .flip-char {
+            display: inline-block;
+            perspective: 1000px;
+            min-width: 1.2em; /* Ensure enough space for IPA symbols without container collapsing */
+            text-align: center;
+            position: relative;
+        }
+        .flipper {
+            position: relative;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            transition-delay: var(--delay);
+            transform-style: preserve-3d;
+        }
+        .flip-container.flip .flipper {
+            transform: rotateX(180deg);
+        }
+        .front, .back {
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: block;
+        }
+        .back {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            text-align: center;
+            transform: rotateX(180deg);
+            color: #ffffff; /* Bright white as requested */
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+            font-size: 64px; /* Scaled to visually match the heavy Syne font */
+            letter-spacing: 0;
+        }
+
+        /* Cinematic Blur Reveal Animation */
+        .focus-reveal {
+            display: inline-block;
+            filter: blur(15px);
+            opacity: 0;
+            transform: scale(1.05);
+            transition: filter 1.2s cubic-bezier(0.25, 1, 0.5, 1), opacity 1s ease-out, transform 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        
+        .slide-container.active .focus-reveal {
+            filter: blur(0);
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .slide-container .slide-title {
+            font-size: 55px;
+            font-weight: 700;
+            margin-bottom: 40px;
+            text-align: left;
+            width: 100%;
+            border-bottom: 2px solid #1a1a1a;
+            padding-bottom: 20px;
+        }
+
+        .slide-container h3 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            letter-spacing: 0px;
+            text-transform: none;
+        }
+
+        .slide-container p,
+        .slide-container li {
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .slide-container .subtitle {
+            font-size: 24px;
+            font-weight: 400;
+            color: #d0d0d0;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .slide-container .content-area {
+            align-items: flex-start;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            justify-content: center;
+            width: 100%;
+        }
+
+        /* =====================================================================
+           3. CUSTOM LAYOUTS & COMPONENTS
+           ===================================================================== */
+
+        .title-layout { text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; z-index: 2;}
+        
+        .two-column { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; width: 100%; align-items: center; }
+        .two-column ul { list-style: none; padding-left: 0; }
+        .two-column li { padding-left: 30px; position: relative; margin-bottom: 20px; }
+        .two-column li::before { content: '→'; position: absolute; left: 0; top: 0; color: #ff2a5f; font-weight: 800; }
+        
+        .two-column.tiled { align-items: stretch; gap: 40px; }
+        .two-column.tiled > div { background-color: #111111; border: 1px solid #222; padding: 40px; text-align: left; display: flex; flex-direction: column; justify-content: center; }
+
+        .three-column { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 30px; 
+            width: 100%; 
+            align-items: stretch; 
+        }
+        .risk-card { 
+            background-color: #111111; 
+            border: 1px solid #222; 
+            padding: 30px 25px; 
+            text-align: left; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: flex-start; 
+            border-radius: 8px;
+        }
+        .risk-card h3 { 
+            font-size: 20px; 
+            margin-bottom: 20px; 
+            display: flex; 
+            align-items: center; 
+        }
+        .risk-card h3 i { 
+            margin-right: 12px; 
+            font-size: 22px; 
+        }
+        .risk-card p { 
+            font-size: 15px; 
+            color: #a0a0a0; 
+            margin-bottom: 15px; 
+            line-height: 1.6; 
+        }
+        .risk-card strong { 
+            color: #fff; 
+            font-family: 'Syne', sans-serif; 
+            letter-spacing: 0.5px; 
+            text-transform: uppercase; 
+            font-size: 13px; 
+            display: block; 
+            margin-bottom: 5px; 
+        }
+
+        /* Literature Grid */
+        .lit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; }
+        .lit-card { background-color: #0a0a0a; border: 1px solid #1f1f1f; padding: 25px; border-radius: 8px; }
+        .tilt-card { transition: transform 0.1s; transform-style: preserve-3d; }
+        .lit-card h4 { font-size: 18px; color: #fff; margin-bottom: 10px; font-family: 'Inter', sans-serif; text-transform: none; font-weight: 600; letter-spacing: 0;}
+        .lit-card .approach { font-size: 15px; color: #a0a0a0; margin-bottom: 15px; }
+        .lit-card .gap { font-size: 15px; color: #ff2a5f; background: rgba(255, 42, 95, 0.05); padding: 10px; border-left: 3px solid #ff2a5f; }
+
+        /* System Schematic Diagram */
+        .system-schematic {
+            display: flex;
+            justify-content: space-between;
+            align-items: stretch;
+            width: 100%;
+            background-color: #080808;
+            border: 1px solid #1f1f1f;
+            border-radius: 12px;
+            padding: 30px;
+            position: relative;
+            background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        .schematic-stage {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: rgba(15, 15, 15, 0.95);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .schematic-stage.highlight {
+            border-color: #5e2aff;
+            box-shadow: 0 0 30px rgba(94, 42, 255, 0.1);
+        }
+        .stage-title {
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #fff;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .schematic-stage.highlight .stage-title {
+            border-bottom-color: #5e2aff;
+        }
+        .stage-boxes {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            flex-grow: 1;
+            justify-content: center;
+        }
+        .s-box {
+            background: #111;
+            border: 1px solid #444;
+            border-radius: 6px;
+            padding: 12px 15px;
+            text-align: left;
+            font-size: 14px;
+            color: #d0d0d0;
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .s-box strong {
+            color: #fff;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .s-box i.icon-main {
+            margin-right: 8px;
+            color: #ff2a5f;
+            width: 16px;
+            text-align: center;
+        }
+        .s-box.accent {
+            border-color: rgba(94, 42, 255, 0.5);
+            background: linear-gradient(90deg, rgba(94, 42, 255, 0.1) 0%, transparent 100%);
+        }
+        .s-box.accent i.icon-main {
+            color: #5e2aff;
+        }
+        
+        /* Expandable Sub-Pipeline Hover Styles */
+        .s-box.expandable {
+            cursor: pointer;
+        }
+        .s-box.expandable:hover {
+            border-color: #ff2a5f;
+            background: #181818;
+            box-shadow: 0 5px 15px rgba(255, 42, 95, 0.1);
+        }
+        .s-box.accent.expandable:hover {
+            border-color: #5e2aff;
+            background: linear-gradient(90deg, rgba(94, 42, 255, 0.15) 0%, transparent 100%);
+            box-shadow: 0 5px 15px rgba(94, 42, 255, 0.1);
+        }
+        .expand-hint {
+            position: absolute;
+            top: 12px;
+            right: 15px;
+            font-size: 14px;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+        .s-box.expandable:hover .expand-hint {
+            transform: rotate(180deg);
+            color: #fff;
+        }
+        .mini-pipeline {
+            position: absolute;
+            bottom: calc(100% + 15px);
+            left: 50%;
+            transform: translateX(-50%) translateY(10px);
+            width: 115%;
+            background: #0f0f0f;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 12px;
+            opacity: 0;
+            visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            z-index: 100;
+            pointer-events: none;
+        }
+        .s-box.accent .mini-pipeline {
+            border-color: rgba(94, 42, 255, 0.5);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.9), 0 0 30px rgba(94, 42, 255, 0.2);
+        }
+        .s-box:not(.accent) .mini-pipeline {
+            border-color: rgba(255, 42, 95, 0.5);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.9), 0 0 30px rgba(255, 42, 95, 0.2);
+        }
+        .mini-pipeline::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 8px;
+            border-style: solid;
+            border-color: #333 transparent transparent transparent;
+        }
+        .s-box.accent .mini-pipeline::after { border-top-color: rgba(94, 42, 255, 0.5); }
+        .s-box:not(.accent) .mini-pipeline::after { border-top-color: rgba(255, 42, 95, 0.5); }
+
+        .s-box.expandable:hover .mini-pipeline {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+        .mini-step {
+            font-size: 12px;
+            color: #b0b0b0;
+            display: flex;
+            align-items: center;
+            background: rgba(0,0,0,0.3);
+            padding: 5px 10px;
+            border-radius: 4px;
+            border-left: 2px solid #5e2aff;
+        }
+        .s-box:not(.accent) .mini-step { border-left-color: #ff2a5f; }
+        .mini-step i { margin-right: 8px; font-size: 10px; color: #fff; }
+        .mini-arrow {
+            text-align: center;
+            color: #555;
+            font-size: 10px;
+            margin: 2px 0;
+        }
+
+        .s-connector {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0 15px;
+            position: relative;
+            z-index: 1;
+        }
+        .s-line {
+            width: 50px;
+            height: 2px;
+            background: #2a2a2a;
+            position: relative;
+            box-shadow: 0 0 10px rgba(94, 42, 255, 0.3);
+            overflow: hidden;
+        }
+        .s-line::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, #5e2aff, transparent);
+            animation: streamData 1.5s infinite linear;
+        }
+        .s-connector .s-line[style*="background: #ff2a5f"] {
+            background: #3a1a20 !important;
+            box-shadow: none !important;
+        }
+        .s-connector .s-line[style*="background: #ff2a5f"]::before {
+            background: linear-gradient(90deg, transparent, #ff2a5f, transparent);
+        }
+        @keyframes streamData {
+            100% { left: 100%; }
+        }
+        .s-line::after {
+            content: '▶';
+            position: absolute;
+            right: -10px;
+            top: -10px;
+            color: #5e2aff;
+            font-size: 20px;
+            text-shadow: 0 0 10px #5e2aff;
+        }
+        .s-connector span {
+            font-size: 11px;
+            color: #a0a0a0;
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: 'Syne', sans-serif;
+            white-space: nowrap;
+        }
+        .s-connector i {
+            color: #ff2a5f;
+            margin-bottom: 5px;
+            font-size: 18px;
+        }
+
+        /* Testbed List */
+        .testbed-grid { display: grid; grid-template-columns: 1fr 1.5fr; gap: 40px; width: 100%; }
+        .hardware-list { background: #111; padding: 30px; border-radius: 8px; border: 1px solid #222; }
+        .hardware-list h3 { border-bottom: 1px solid #333; padding-bottom: 15px; margin-bottom: 20px; }
+        .hardware-item { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 16px;}
+        .hardware-item span:first-child { color: #fff; font-weight: 500;}
+
+        /* Metrics */
+        .metrics-grid { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 20px; 
+            width: 100%; 
+        }
+        .metric-card { 
+            background: #0a0a0a; 
+            border: 1px solid #5e2aff; 
+            padding: 30px 20px; 
+            text-align: center; 
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        .number-wrapper {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            margin-bottom: 15px;
+            color: #ff2a5f;
+        }
+        .number-wrapper .symbol {
+            font-size: 32px;
+            margin-right: 5px;
+            font-weight: 700;
+            font-family: 'Syne', sans-serif;
+        }
+        .number-wrapper .number {
+            font-size: 48px;
+            font-weight: 800;
+            line-height: 1;
+            margin: 0;
+            font-family: 'Syne', sans-serif;
+        }
+        .number-wrapper .unit {
+            font-size: 24px;
+            margin-left: 2px;
+            font-weight: 600;
+            font-family: 'Syne', sans-serif;
+        }
+        .metric-card p { 
+            font-size: 16px; 
+            color: #fff; 
+            font-weight: 600; 
+            margin: 0 0 10px 0; 
+            line-height: 1.3;
+        }
+        .metric-card span.desc { 
+            font-size: 13px; 
+            color: #888; 
+            display: block; 
+            line-height: 1.4;
+        }
+        
+        /* Timeline */
+        .timeline-layout {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            width: 100%;
+            position: relative;
+            padding-top: 40px;
+        }
+        .timeline-line {
+            position: absolute;
+            top: 60px; /* Aligns with circle centers */
+            left: 5%;
+            width: 90%;
+            height: 2px;
+            background-color: #333;
+            z-index: 0;
+        }
+        .timeline-node {
+            position: relative;
+            z-index: 1;
+            width: 18%;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .t-circle {
+            width: 44px;
+            height: 44px;
+            background: #050505;
+            border: 2px solid #5e2aff;
+            border-radius: 50%;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            font-family: 'Syne', sans-serif;
+            font-size: 16px;
+            box-shadow: 0 0 15px rgba(94, 42, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        .timeline-node:nth-child(even) .t-circle {
+            border-color: #ff2a5f;
+            box-shadow: 0 0 15px rgba(255, 42, 95, 0.2);
+        }
+        .timeline-node h4 {
+            font-size: 18px;
+            color: #fff;
+            margin-bottom: 10px;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+        .timeline-node p {
+            font-size: 14px;
+            color: #888;
+            line-height: 1.4;
+        }
+        .success-box {
+            margin-top: 60px;
+            background: #0a0a0a;
+            border: 1px solid #1f1f1f;
+            border-left: 4px solid #5e2aff;
+            padding: 30px;
+            border-radius: 8px;
+            width: 100%;
+        }
+        .success-box h3 {
+            color: #fff;
+            font-size: 20px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        .success-box p {
+            color: #a0a0a0;
+            font-size: 16px;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        /* Misc */
+        .qa-layout { text-align: center; }
+        .team-info { margin-top: 30px; color: #a0a0a0; font-family: 'Syne', sans-serif; font-size: 18px; line-height: 1.6; }
+
+        /* Fullscreen Button */
+        #fullscreen-btn {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            background: #111;
+            color: #a0a0a0;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 10px 15px;
+            font-size: 18px;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        #fullscreen-btn:hover {
+            color: #fff;
+            border-color: #5e2aff;
+            box-shadow: 0 0 15px rgba(94, 42, 255, 0.3);
+        }
+        
+        #nav-hints {
+            transition: opacity 1s ease;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Slide 1: Title Slide -->
+    <div class="slide-container active" id="slide1">
+        <div id="netr-bg-container"></div>
+        <div class="title-layout">
+            <span class="heilmeier-tag">CS6651 Course Project Proposal</span>
+            
+            <!-- Cascading Flipping Title -->
+            <h1>
+                <span class="focus-reveal flip-container" id="netr-flipper">
+                    <span class="flip-char">
+                        <span class="flipper" style="--delay: 0s;">
+                            <span class="front">N</span>
+                            <span class="back">[n̪</span>
+                        </span>
+                    </span>
+                    <span class="flip-char">
+                        <span class="flipper" style="--delay: 0.1s;">
+                            <span class="front">E</span>
+                            <span class="back">eː</span>
+                        </span>
+                    </span>
+                    <span class="flip-char">
+                        <span class="flipper" style="--delay: 0.2s;">
+                            <span class="front">T</span>
+                            <span class="back">t̪</span>
+                        </span>
+                    </span>
+                    <span class="flip-char">
+                        <span class="flipper" style="--delay: 0.3s;">
+                            <span class="front">R</span>
+                            <span class="back">ɾ]</span>
+                        </span>
+                    </span>
+                </span>
+                <br>
+                <span class="text-gradient focus-reveal" style="transition-delay: 0.15s;">Near Eye Tracker for Reading</span>
+            </h1>
+
+            <p class="subtitle">PCCR-Based Analytics & Immersive Audio for Physical Media</p>
+            <div class="team-info" style="margin-top: 40px;">
+                Dev Mehta (CS22B007) &bull; Mayush Kumar (CS22B054) &bull; Maadhav Patel (EE22B033)
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 2: Problem Statement & Heilmeier 1, 4 -->
+    <div class="slide-container" id="slide2">
+        <span class="heilmeier-tag" style="align-self: flex-start;">What are we doing? & Who cares?</span>
+        <h2 class="slide-title">The Physical Reading Gap</h2>
+        <div class="content-area">
+            <div class="two-column">
+                <div>
+                    <h3>The Problem</h3>
+                    <p>Physical reading provides no measurable analytics or adaptive feedback. Unlike digital platforms, books cannot track reading speed, engagement, or progress. Existing eye trackers are expensive and not suitable for daily use. There is no affordable wearable system that can detect which line a person is reading and enhance the experience with synchronized audio.</p>
+                    <h3 style="margin-top: 30px;">The Objective</h3>
+                    <p>We aim to build a low-cost wearable gaze tracking system that detects the current line of text in real time using a PCCR-based method. The system will compute reading metrics such as words per minute and regressions, and generate synchronized audioscapes that adapt to the content being read.</p>
+                </div>
+                <div style="background: #111; padding: 40px; border-left: 4px solid #ff2a5f;">
+                    <h3>Who Cares?</h3>
+                    <p style="font-size: 20px; line-height: 1.6; color: #d0d0d0;">Students, educators, and researchers gain objective insight into reading behavior. Developers of immersive technologies can extend physical books with adaptive audio. This system turns traditional reading into an interactive, measurable experience.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 3: Literature & Gaps (Heilmeier 2) -->
+    <div class="slide-container" id="slide3">
+        <span class="heilmeier-tag" style="align-self: flex-start;">How is it done today? (Related Work & Gaps)</span>
+        <h2 class="slide-title">State-of-the-Art Limitations</h2>
+        <div class="content-area">
+            <div class="lit-grid">
+                <!-- Paper 1 -->
+                <div class="lit-card tilt-card">
+                    <h4>1. Kassner et al., "OpenEyes: Open-Source Eye Tracking" (2014)</h4>
+                    <p class="approach">High-resolution camera rigs using complex 3D eyeball models and pure homography.</p>
+                    <p class="gap"><strong>Gap:</strong> Prohibitively expensive ($1000+), requires powerful dedicated computing, unsuitable for lightweight wearables.</p>
+                </div>
+                <!-- Paper 2 -->
+                <div class="lit-card tilt-card">
+                    <h4>2. Krafka et al., "iTracker: Deep Learning for Eye Tracking" (2016)</h4>
+                    <p class="approach">Appearance-based CNNs estimating gaze from standard RGB webcams.</p>
+                    <p class="gap"><strong>Gap:</strong> Highly compute-intensive. Degrades rapidly with head-mounted (close-up) geometries and lacks precise line-level spatial resolution.</p>
+                </div>
+                <!-- Paper 3 -->
+                <div class="lit-card tilt-card">
+                    <h4>3. Biedert et al., "The Wordometer" (2010)</h4>
+                    <p class="approach">Estimates reading speed by tracking document scrolling and digital page transitions.</p>
+                    <p class="gap"><strong>Gap:</strong> Strictly limited to digital screens. Completely ignores physical media and actual visual fixations.</p>
+                </div>
+                <!-- Paper 4 -->
+                <div class="lit-card tilt-card">
+                    <h4>4. Bulling et al., "Wearable EOG-based Activity Recognition" (2009)</h4>
+                    <p class="approach">Uses Electrooculography (electrodes around the eyes) to detect reading movements.</p>
+                    <p class="gap"><strong>Gap:</strong> Highly intrusive setup. Can detect *that* a user is reading, but cannot map gaze to specific text coordinates.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 4: Our Approach (Heilmeier 3) -->
+    <div class="slide-container" id="slide4">
+        <span class="heilmeier-tag" style="align-self: flex-start;">What is new in our approach?</span>
+        <h2 class="slide-title">End-to-End System Pipeline</h2>
+        <div class="content-area">
+            <div class="system-schematic">
+                <!-- Stage 1: Hardware -->
+                <div class="schematic-stage">
+                    <div class="stage-title">1. Data Acquisition</div>
+                    <div class="stage-boxes">
+                        <div class="s-box">
+                            <strong><i class="fa-solid fa-eye icon-main"></i> IR Camera Node</strong>
+                            ESP32-CAM (QVGA) + NIR LEDs capturing pupil/glint.
+                        </div>
+                        <div class="s-box">
+                            <strong><i class="fa-solid fa-camera icon-main"></i> Scene Camera Node</strong>
+                            ESP32-CAM (VGA) capturing physical text page.
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Connector 1 -->
+                <div class="s-connector">
+                    <i class="fa-solid fa-wifi"></i>
+                    <div class="s-line"></div>
+                    <span>UDP Stream</span>
+                </div>
+
+                <!-- Stage 2: Edge -->
+                <div class="schematic-stage highlight">
+                    <div class="stage-title text-gradient">2. Edge Processing</div>
+                    <div class="stage-boxes">
+                        <div class="s-box accent">
+                            <strong><i class="fa-solid fa-vector-square icon-main"></i> Vector Extraction</strong>
+                            Identify Pupil Center & Corneal Reflection.
+                        </div>
+                        <div class="s-box accent">
+                            <strong><i class="fa-solid fa-align-left icon-main"></i> Scene Analysis</strong>
+                            Text line segmentation & structural contouring.
+                        </div>
+                        <div class="s-box accent expandable">
+                            <i class="fa-solid fa-chevron-down expand-hint"></i>
+                            <strong><i class="fa-solid fa-project-diagram icon-main"></i> Gaze Mapping</strong>
+                            Polynomial mapping with temporal line-snapping.
+                            <div class="mini-pipeline">
+                                <div class="mini-step"><i class="fa-solid fa-calculator"></i> Vector-to-Scene Regression Matrix</div>
+                                <div class="mini-arrow"><i class="fa-solid fa-arrow-down"></i></div>
+                                <div class="mini-step"><i class="fa-solid fa-crosshairs"></i> Output Raw (X, Y) Coordinate</div>
+                                <div class="mini-arrow"><i class="fa-solid fa-arrow-down"></i></div>
+                                <div class="mini-step"><i class="fa-solid fa-magnet"></i> Y-Axis Lock to Nearest Text Line</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Connector 2 -->
+                <div class="s-connector">
+                    <div class="s-line" style="background: #ff2a5f; box-shadow: 0 0 10px #ff2a5f;"></div>
+                    <style>.s-connector .s-line[style*="background: #ff2a5f"]::after { color: #ff2a5f; text-shadow: 0 0 10px #ff2a5f; }</style>
+                    <span style="color: #ff2a5f;">Coordinates</span>
+                </div>
+
+                <!-- Stage 3: Output -->
+                <div class="schematic-stage">
+                    <div class="stage-title">3. Application Layer</div>
+                    <div class="stage-boxes">
+                        <div class="s-box">
+                            <strong><i class="fa-solid fa-chart-pie icon-main"></i> Analytics Engine</strong>
+                            Computes WPM, fixation duration, & drift metrics.
+                        </div>
+                        <div class="s-box expandable">
+                            <i class="fa-solid fa-chevron-down expand-hint"></i>
+                            <strong><i class="fa-solid fa-headphones icon-main"></i> Audio Synthesis</strong>
+                            Triggers synchronized spatial soundscapes.
+                            <div class="mini-pipeline">
+                                <div class="mini-step"><i class="fa-solid fa-font"></i> Text Content Extraction (OCR)</div>
+                                <div class="mini-arrow"><i class="fa-solid fa-arrow-down"></i></div>
+                                <div class="mini-step"><i class="fa-solid fa-tags"></i> Semantic Context Tagging</div>
+                                <div class="mini-arrow"><i class="fa-solid fa-arrow-down"></i></div>
+                                <div class="mini-step"><i class="fa-solid fa-volume-high"></i> Render Spatial Audio Output</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p style="text-align: center; margin-top: 30px; width: 100%;"><strong>The Innovation:</strong> Combining cheap embedded sensors with edge-offloaded PCCR (Pupil Center-Corneal Reflection) algorithms to achieve line-level accuracy without lab-grade hardware.</p>
+        </div>
+    </div>
+
+    <!-- Slide 5: Experiments & Groundtruth (Heilmeier 6 & 7) -->
+    <div class="slide-container" id="slide5">
+        <span class="heilmeier-tag" style="align-self: flex-start;">Testbed & Groundtruth Collection</span>
+        <h2 class="slide-title">Experimental Setup</h2>
+        <div class="content-area">
+            <div class="testbed-grid">
+                <!-- BOM -->
+                <div class="hardware-list tilt-card">
+                    <h3>Hardware BOM</h3>
+                    <div class="hardware-item"><span>2x ESP32-CAM Modules</span> <span>₹1,200</span></div>
+                    <div class="hardware-item"><span>1x IR Camera Filter Swap</span> <span>₹200</span></div>
+                    <div class="hardware-item"><span>NIR LEDs (850nm)</span> <span>₹100</span></div>
+                    <div class="hardware-item"><span>3D Printed Mounts (PLA)</span> <span>₹300</span></div>
+                    <div class="hardware-item"><span>LiPo Battery & Wire</span> <span>₹400</span></div>
+                    <div class="hardware-item" style="border-top: 1px dashed #444; padding-top: 10px; margin-top: 10px;">
+                        <span style="color: #ff2a5f; font-weight: bold;">Total Cost Estimate</span> 
+                        <span style="color: #ff2a5f; font-weight: bold;">~₹2,200</span>
+                    </div>
+                </div>
+                
+                <!-- Experiments -->
+                <div>
+                    <h3>Data Collection & Testing Protocol</h3>
+                    <ul class="two-column" style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
+                        <li><strong>Calibration Study:</strong> A calibration study will compare predicted gaze points with known fixation targets to measure angular error and validate gaze-to-page mapping.</li>
+                        <li><strong>Line Detection:</strong> Recorded reading sessions will be manually annotated to evaluate line detection accuracy and words-per-minute estimation.</li>
+                        <li><strong>System Assessment:</strong> Extended sessions and a small user study (5–10 participants) will assess drift, latency, system reliability, and the effectiveness of synchronized audioscapes.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 6: Performance Measures (Heilmeier 7) -->
+    <div class="slide-container" id="slide6">
+        <span class="heilmeier-tag" style="align-self: flex-start;">How will we know it works?</span>
+        <h2 class="slide-title">Expected Results & Metrics</h2>
+        <div class="content-area">
+            <p style="margin-bottom: 40px;">Final and Mid-term exams for this project are defined by strict quantitative performance thresholds evaluated against our collected groundtruth.</p>
+            
+            <div class="metrics-grid">
+                <div class="metric-card tilt-card">
+                    <div class="number-wrapper">
+                        <span class="symbol">&ge;</span>
+                        <span class="number">85</span>
+                        <span class="unit">%</span>
+                    </div>
+                    <p>Line Detection Accuracy</p>
+                    <span class="desc">System correctly identifies the exact physical text line being read.</span>
+                </div>
+                <div class="metric-card tilt-card">
+                    <div class="number-wrapper">
+                        <span class="symbol">&le;</span>
+                        <span class="number">3</span>
+                        <span class="unit">&deg;</span>
+                    </div>
+                    <p>Mean Angular Error</p>
+                    <span class="desc">Spatial drift between actual fixation and mapped scene coordinate.</span>
+                </div>
+                <div class="metric-card tilt-card">
+                    <div class="number-wrapper">
+                        <span class="symbol">&le;</span>
+                        <span class="number">20</span>
+                        <span class="unit">%</span>
+                    </div>
+                    <p>WPM Estimation Error</p>
+                    <span class="desc">Variance between computed reading speed and manually timed speed.</span>
+                </div>
+                <div class="metric-card tilt-card">
+                    <div class="number-wrapper">
+                        <span class="symbol">&le;</span>
+                        <span class="number">400</span>
+                        <span class="unit">ms</span>
+                    </div>
+                    <p>End-to-End Latency</p>
+                    <span class="desc">Time from hardware capture to audio feedback triggering on the edge.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 7: Risks & Mitigations (Heilmeier 5) -->
+    <div class="slide-container" id="slide7">
+        <span class="heilmeier-tag" style="align-self: flex-start;">What are the risks?</span>
+        <h2 class="slide-title">Risks & Mitigations</h2>
+        <div class="content-area">
+            <div class="three-column">
+                <div class="risk-card tilt-card" style="border-top: 4px solid #ff2a5f;">
+                    <h3 style="color: #ff2a5f;"><i class="fa-solid fa-crosshairs"></i> Calibration Drift</h3>
+                    <p><strong>Challenge</strong>Calibration drift and mechanical instability may reduce line detection accuracy over time.</p>
+                    <p><strong>Mitigation</strong>This can be mitigated through rigid mounting, multi-point calibration, and periodic recalibration during use.</p>
+                </div>
+                <div class="risk-card tilt-card" style="border-top: 4px solid #5e2aff;">
+                    <h3 style="color: #5e2aff;"><i class="fa-solid fa-lightbulb"></i> Signal Noise</h3>
+                    <p><strong>Challenge</strong>Noisy pupil or glint detection due to lighting conditions, reflections, or low-resolution hardware may affect angular precision.</p>
+                    <p><strong>Mitigation</strong>This can be mitigated using controlled IR illumination, multi-glint setups, and temporal smoothing of gaze signals.</p>
+                </div>
+                <div class="risk-card tilt-card" style="border-top: 4px solid #00f2fe;">
+                    <h3 style="color: #00f2fe;"><i class="fa-solid fa-ruler-combined"></i> Precision Limits</h3>
+                    <p><strong>Challenge</strong>Insufficient precision for adjacent line separation may occur if angular error exceeds expectations.</p>
+                    <p><strong>Mitigation</strong>This can be mitigated by combining geometric PCCR estimation with page layout constraints and sequential reading priors to stabilize line-level predictions.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 8: Execution Timeline / Results (Heilmeier 8) -->
+    <div class="slide-container" id="slide8">
+        <span class="heilmeier-tag" style="align-self: flex-start;">Project Milestones</span>
+        <h2 class="slide-title">Execution Timeline</h2>
+        <div class="content-area">
+            
+            <div class="timeline-layout">
+                <div class="timeline-line"></div>
+                
+                <div class="timeline-node tilt-card">
+                    <div class="t-circle">W2</div>
+                    <h4>Pupil & Glint</h4>
+                    <p>Reliable detection of pupil and corneal reflection.</p>
+                </div>
+                
+                <div class="timeline-node tilt-card">
+                    <div class="t-circle">W4</div>
+                    <h4>Calibration</h4>
+                    <p>Calibrated gaze-to-scene mapping established.</p>
+                </div>
+                
+                <div class="timeline-node tilt-card">
+                    <div class="t-circle">W6</div>
+                    <h4>Line Tracking</h4>
+                    <p>Stable line-level detection heuristics in place.</p>
+                </div>
+                
+                <div class="timeline-node tilt-card">
+                    <div class="t-circle">W7</div>
+                    <h4>Analytics & Audio</h4>
+                    <p>Reading metrics & immersive audio integration.</p>
+                </div>
+                
+                <div class="timeline-node tilt-card">
+                    <div class="t-circle">W9</div>
+                    <h4>Validation</h4>
+                    <p>Final experimentation & accuracy metrics gathering.</p>
+                </div>
+            </div>
+
+            <div class="success-box">
+                <h3>Success Criterion</h3>
+                <p>The project will be considered successful if line detection accuracy exceeds 85%, WPM estimation error remains below 20%, the system operates in real time using low-cost hardware, and users report improved engagement or productivity.</p>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Slide 9: Q&A -->
+    <div class="slide-container" id="slide9">
+        <div class="qa-layout">
+            <h2 class="text-gradient" style="font-size: 90px;">Questions.</h2>
+            <div class="team-info" style="margin-top: 50px;">
+                <strong>Project NETR - CS6651</strong><br>
+                Dev Mehta &bull; Mayush Kumar &bull; Maadhav Patel
+            </div>
+        </div>
+    </div>
+
+    <!-- Presentation Navigation Hints -->
+    <div id="nav-hints" style="position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); z-index: 1000; color: #666; font-family: 'Syne', sans-serif; font-size: 13px; letter-spacing: 2px; text-transform: uppercase;">
+        Use <kbd style="background: #222; color: #fff; padding: 4px 8px; border-radius: 4px; border: 1px solid #444; margin: 0 4px; font-family: sans-serif;">&larr;</kbd> <kbd style="background: #222; color: #fff; padding: 4px 8px; border-radius: 4px; border: 1px solid #444; margin: 0 4px; font-family: sans-serif;">&rarr;</kbd> to navigate slides
+    </div>
+
+    <!-- Fullscreen Toggle -->
+    <button id="fullscreen-btn" title="Toggle Fullscreen">
+        <i class="fa-solid fa-expand"></i>
+    </button>
+
+    <!-- Animation Logic -->
+    <script>
+        // --- Multilingual NETR Background ---
+        function initNetrBackground() {
+            const container = document.getElementById('netr-bg-container');
+            if (!container) return;
+            
+            // Translations of "Eye" (Netr) across requested languages
+            const words = [
+                "नेत्र",    // Hindi / Marathi
+                "கண்",     // Tamil
+                "নেত্র",     // Bengali
+                "નેત્ર",     // Gujarati
+                "ਨੇਤਰ",    // Punjabi
+                "నేత్రం",    // Telugu
+                "നേത്രം",    // Malayalam
+                "ನೇತ್ರ",    // Kannada
+                "آنکھ"     // Urdu
+            ];
+            
+            // Use a grid system to strictly prevent overlapping
+            const cols = 8;
+            const rows = 5;
+            const cellW = 100 / cols;
+            const cellH = 100 / rows;
+
+            for(let r = 0; r < rows; r++) {
+                for(let c = 0; c < cols; c++) {
+                    
+                    // Create a "donut hole" effect in the center to prevent overlapping the main title
+                    // Center occupies roughly rows 1,2,3 and cols 2,3,4,5
+                    const isCenter = (r >= 1 && r <= 3) && (c >= 2 && c <= 5);
+                    // 85% chance to skip rendering a word if it falls in the center zone
+                    if (isCenter && Math.random() < 0.85) continue; 
+
+                    let span = document.createElement('span');
+                    span.className = 'netr-word';
+                    span.innerText = words[Math.floor(Math.random() * words.length)];
+                    
+                    // Constrain random offsets to the safe zone of each grid cell to avoid overlap
+                    const offsetX = (Math.random() * 0.4 + 0.3) * cellW; // 30% to 70% bounds
+                    const offsetY = (Math.random() * 0.4 + 0.3) * cellH; // 30% to 70% bounds
+                    
+                    span.style.left = `calc(${c * cellW}% + ${offsetX}%)`;
+                    span.style.top = `calc(${r * cellH}% + ${offsetY}%)`;
+                    
+                    // Randomize animation duration for depth/parallax effect
+                    span.style.animationDuration = (Math.random() * 40 + 30) + 's';
+                    span.style.animationDelay = (Math.random() * -60) + 's';
+                    
+                    container.appendChild(span);
+                }
+            }
+        }
+
+        // --- Z-Axis Slide Navigation Engine ---
+        const slides = document.querySelectorAll('.slide-container');
+        let currentSlide = 0;
+
+        function updateSlides(direction) {
+            slides.forEach((slide, index) => {
+                slide.classList.remove('active', 'prev');
+                if (index === currentSlide) {
+                    slide.classList.add('active');
+                } else if (index < currentSlide) {
+                    slide.classList.add('prev');
+                }
+            });
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'Space') {
+                if (currentSlide < slides.length - 1) {
+                    currentSlide++;
+                    updateSlides(1);
+                }
+            } else if (e.key === 'ArrowLeft') {
+                if (currentSlide > 0) {
+                    currentSlide--;
+                    updateSlides(-1);
+                }
+            }
+        });
+
+        // Initialize First Slide & BG Animation
+        updateSlides(0);
+        initNetrBackground();
+
+        // --- Auto-Hide Nav Hints ---
+        setTimeout(() => {
+            const navHints = document.getElementById('nav-hints');
+            if(navHints) {
+                navHints.style.opacity = '0';
+            }
+        }, 6000);
+
+        // --- Title Flipper Logic ---
+        setInterval(() => {
+            const flipper = document.getElementById('netr-flipper');
+            if (flipper) {
+                flipper.classList.toggle('flip');
+            }
+        }, 4000);
+
+        // --- Anim 3: 3D Holographic Hover ---
+        const tiltCards = document.querySelectorAll('.tilt-card');
+        tiltCards.forEach(card => {
+            card.addEventListener('mousemove', e => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const rotateX = ((y - centerY) / centerY) * -5; // Max 5 deg tilt
+                const rotateY = ((x - centerX) / centerX) * 5;
+                
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+                card.style.transition = 'transform 0.5s ease';
+            });
+            
+            card.addEventListener('mouseenter', () => {
+                card.style.transition = 'none'; // Snappy track on enter
+            });
+        });
+
+        // --- Fullscreen Toggle Logic ---
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch((err) => {
+                    console.log(`Error attempting to enable fullscreen: ${err.message}`);
+                });
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-compress"></i>';
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-expand"></i>';
+            }
+        });
+
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-expand"></i>';
+            } else {
+                fullscreenBtn.innerHTML = '<i class="fa-solid fa-compress"></i>';
+            }
+        });
+    </script>
+</body>
+</html>
